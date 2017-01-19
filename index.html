@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Geocoding service</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+/* Always set the map height explicitly to define the size of the div
+ * element that contains the map. */
+#map {
+  height: 100%;
+}
+/* Optional: Makes the sample page fill the window. */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+#floating-panel {
+  position: absolute;
+  top: 10px;
+  left: 25%;
+  z-index: 5;
+  background-color: #fff;
+  padding: 5px;
+  border: 1px solid #999;
+  text-align: center;
+  font-family: 'Roboto','sans-serif';
+  line-height: 30px;
+  padding-left: 10px;
+}
+    </style>
+  </head>
+  <body>
+    <div id="floating-panel">
+  <input id="address" type="textbox" value="">
+  <input id="submit" type="button" value="Geocode">
+</div>
+<div id="map"></div>
+<script>
+  function initMap() {
+  var map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 10,
+    center: {lat: -34.397, lng: 150.644}
+  });
+  
+  var geocoder = new google.maps.Geocoder();
+
+  document.getElementById('submit').addEventListener('click', function() {
+    geocodeAddress(geocoder, map);
+  });
+
+  geoMarker(geocoder, map)
+}
+
+function geocodeAddress(geocoder, resultsMap) {
+  var address = document.getElementById('address').value;
+  geocoder.geocode({'address': address}, function(results, status) {
+    if (status === 'OK') {
+      resultsMap.setCenter(results[0].geometry.location);
+      var marker = new google.maps.Marker({
+        map: resultsMap,
+        position: results[0].geometry.location
+      });
+    } else {
+      alert('Geocode was not successful for the following reason: ' + status);
+    }
+  });
+}
+
+function geoMarker(geocoder, resultsMap){
+    var marker, i;
+    var infowindow = new google.maps.InfoWindow();
+   
+
+   loadJSON("data.json", function(response) {
+    
+        var actual_JSON = JSON.parse(response);
+
+        for ( var x = 0 ; x < actual_JSON.length ; x++){
+
+            var addressone = actual_JSON[x].ADDRESS1;
+            var city = actual_JSON[x].CITY;
+            var addressCity = addressone+' '+city;
+
+
+          geocoder.geocode({'address': addressCity}, function(results, status) {
+
+            console.log(status);
+            if (status === 'OK'){
+
+                resultsMap.setCenter(results[0].geometry.location);
+
+                marker = new google.maps.Marker({
+                  map: resultsMap,
+                  position: results[0].geometry.location
+                });
+
+                google.maps.event.addListener(marker, 'click', (function(marker, i) {
+                  return function() {
+                    infowindow.setContent(locations[i][0]);
+                    infowindow.open(map, marker);
+                  }
+                })(marker, i));
+              }
+          })
+        }
+    });
+}
+
+// get JSON data from json file
+function loadJSON(file, callback) {   
+    var xobj = new XMLHttpRequest();
+    xobj.overrideMimeType("application/json");
+    xobj.open('GET', file, true); // Replace 'my_data' with the path to your file
+    xobj.onreadystatechange = function () {
+          if (xobj.readyState == 4 && xobj.status == "200") {
+            // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
+            callback(xobj.responseText);
+          }
+    };
+    xobj.send(null);  
+ }
+
+
+
+</script>
+<!-- Replace the value of the key parameter with your own API key. -->
+<script async defer
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDbQYD3Ivlf9YuoA-G1UUXZqQdUIsu_eEA&callback=initMap">
+</script>
+  </body>
+</html>
